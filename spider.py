@@ -1,80 +1,169 @@
-# Realizado por Solo a 24/07/20272 última actualización 24/07/2022, WIP
+# Realizado por Solo a 24/07/20272 última actualización 29/07/2022, WIP
 
 
-#--------------------------------------------------------------------------------
-#-------------------------------LIBRERIAS----------------------------------------
+#--------------------------------------------------------------------------------------------------------
+#-----------------------------------------LIBRERIAS------------------------------------------------------
 
 import argparse
 from bs4 import BeautifulSoup as bs
+from numpy import append
 import requests
-import urllib 
+import base64
+import random
+import os
 
-#--------------------------------------------------------------------------------
-#-------------------------------VARIABLES----------------------------------------
-'''
-url = 'ruta no indicada'
-nivel = 5
-ruta = './data/'
-'''
-#--------------------------------------------------------------------------------
-#--------------------------CONFIGURACION PARSER----------------------------------
+#--------------------------------------------------------------------------------------------------------
+#---------------------------------------CONFIGURACION----------------------------------------------------
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-r', help = "Descarga de forma recursiva las imágenes.", action= "store_true")
 parser.add_argument('-l', help = "Indica el nivel profundidad máximo de la descarga recursiva", type = int, default = 5)
 parser.add_argument('-p', help = "Indica la ruta donde se guardarán los archivos descargados.", type = str, default= "./data/")
-# Aqui molaria que si se modifica el path por defecto se fuese la consola, se sacase el nombre de usuario,
-# y se hiciese una ruta con mkdir -p para guardar las imagenes rollo /home/$USER/Desktop/aracne (solo en caso de que no haya / en el nombre, que entonces respetamos
-# la direccion dada por el usuario, a no ser que no exista, que si no, pues de nuevo se crea una)
 parser.add_argument('URL', help = "Indica la web a Scrapear.", type = str)
 
-#--------------------------------------------------------------------------------
-#-------------------------------FUNCIONES----------------------------------------
+args = parser.parse_args()
 
 
 
+cmd = 'whoami'
+user = os.popen(cmd).read()[:-1]
+if args.p != "./data/":
+    if  args.p.startswith('/'):
+        os.system (f'mkdir -p .{args.p}')
+        args.p = '.' + args.p.rstrip('/')
+    else:
+        os.system (f'mkdir -p ~/Desktop/{args.p}')
+        args.p = '/home/' + user + '/Desktop/' + args.p.rstrip('/')
 
+if args.r != True:
+    args.l = 1
 
+print ('*' * 25, args.p, '*' * 25, args.l)
+#--------------------------------------------------------------------------------------------------------
+#-----------------------------------------VARIABLES------------------------------------------------------
 
-#--------------------------------------------------------------------------------
-#-------------------------------EJECUCION----------------------------------------
+headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36'}
 
-if __name__ == "__main__":
+url_a_scrapear = [args.URL[:-1]]
+url_total = [args.URL[:-1]]
 
-    args = parser.parse_args()
+url_base = (args.URL.split('/')[0] + '//' + args.URL.split('/')[2])
 
-    print (args.URL)
+images_data = []
+
+#--------------------------------------------------------------------------------------------------------
+#-----------------------------------------FUNCIONES------------------------------------------------------
+
+def insertar_url (lista, lista2, url, url_base):
     
-    headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36'}
-    html = requests.get(args.URL, headers=headers)
     
-    print (html.status_code)
-    soup = bs(html.content, 'html.parser')
+    if url.startswith('/'):
+        url = url_base + url
 
-    #print(html.status_code)
-    imagenes = soup.find_all('img')
+    if confirm_url:
+        if url.startswith ('#') or url.startswith ('?'):
+            print ('desechado', '-' * 15 , url)
+        elif url.startswith(url_base):
+            if url.endswith('/'):
+                url = url[:-1]
+            if url in lista or url in lista2:
+                print ('duplicado', '-' * 15 , url)
+            elif url not in lista and url not in lista2:
+                lista.append(url)
+    
+
+def confirm_url (url):
+
+    chivato = requests.get(url, headers= headers)
+    if chivato.status_code == '200':
+        return (True)
 
 
-    for image in (soup.find_all('img')):
+def name_url (img_src):
+    
+    img = ["Error al descargar la imagen", "https://w7.pngwing.com/pngs/436/575/png-transparent-computer-icons-error-checklist-trademark-area-warning.png"]
+    
+    if img_src.startswith("data:image"):
         
-        if (image['src'].startswith("https")):
-            img = image['src']
-            print (image['src'])
-            nombre = image['src'].split('/')
-            for n in nombre:
-                if '.jpg' in n or '.png' in n or '.jpeg' in n or '.gif' in n or '.bmp' in n:
-                    n1 = n.split('.')
-                    print (n1[0])
-            print ('-' * 100)
+        data = img_src.split(',')
+        if data[1] not in images_data:
+            images_data.append(data[1])
+            img[1] = base64.b64decode(data[1])
+            #print (data[0])
+            if 'jpg' in data[0]:
+                img[0] = 'logo_' + str(random.randint(0,100)).zfill(3) + '.jpg'
+            elif 'jpeg' in data[0]:
+                img[0] = 'logo_' + str(random.randint(0,100)).zfill(3) + '.jpeg'
+            elif 'png' in data[0]:
+                img[0] = 'logo_' + str(random.randint(0,100)).zfill(3) + '.png'
+            elif 'gif' in data[0]:
+                img[0] = 'logo_' + str(random.randint(0,100)).zfill(3) + '.gif'
+            elif 'bmp' in data[0]:
+                img[0] = 'logo_' + str(random.randint(0,100)).zfill(3) + '.png'
+    
+    
+    elif img_src.startswith("https"):
         
-        #img = requests.get(image['src'], headers = headers)
-        
-        urllib.request.urlretrieve(img, args.p + n1[0])
-        '''
+        img[1] = requests.get(img_src, headers = headers).content
+        nombre = image['src'].split('/')
+        for n in nombre:
+            if '.jpg' in n:
+                n1 = n.split('.')
+                img[0] = n1[0] + '.jpg'
+            elif '.jpeg' in n:
+                n1 = n.split('.')
+                img[0] = n1[0] + '.jpeg'
+            elif '.png' in n:
+                n1 = n.split('.')
+                img[0] = n1[0] + '.png'
+            elif '.gif' in n:
+                n1 = n.split('.')
+                img[0] = n1[0] + '.gif'
+            elif '.bmp' in n:
+                n1 = n.split('.')
+                img[0] = n1[0] + '.png'
+    return (img)
+
+#--------------------------------------------------------------------------------------------------------
+#-----------------------------------------EJECUCION------------------------------------------------------
+
+while args.l > 1:
+    
+    url_aux = []
+    for url in url_a_scrapear:
+    
         try:
-            with open(args.p + '/' + n1[0], "wb") as file:
-        
-                file.write(img.content)
+            html = requests.get(url, headers= headers)
+            soup = bs(html.content, 'html.parser')
+            links = soup.find_all('a')
+            for link in links:
+                insertar_url (url_aux, url_total, link['href'], url_base)
         except:
             pass
-        '''
+
+
+    args.l -= 1
+    url_total = url_total + url_aux
+    url_a_scrapear = url_aux
+
+
+for elem in url_total:
+    htmli = requests.get(elem, headers = headers)
+    
+    #print (htmli.status_code)
+    soupi = bs(htmli.content, 'html.parser')
+
+    imagenes = soupi.find_all('img')
+
+    for image in (soupi.find_all('img')):
+        
+        
+        img = image['src']
+        
+        #print ('-' * 25, image['src'], '-' * 25)
+        nu = name_url(img)
+        try:
+            with open(args.p + '/' + nu[0], "wb") as file:    
+                file.write(nu[1])
+        except:
+            pass
