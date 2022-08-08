@@ -6,7 +6,6 @@
 
 import argparse
 from bs4 import BeautifulSoup as bs
-from numpy import append
 import requests
 import base64
 import random
