@@ -30,22 +30,24 @@ for elem in lista:
 #_-_-_-_-_-_-_-_-_-_-_-_-_-_-EJECUCION-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-
 
 for clave, valor in info.items():
+    try:
+        imagen = carpeta + clave
     
-    imagen = carpeta + clave
-   
-    img = Image.open(imagen)
-    exif = img.getexif()
+        img = Image.open(imagen)
+        exif = img.getexif()
 
-    valor['format'] = img.format
-    valor['width'] = img.size[0]
-    valor['height'] = img.size[1]
-    valor['mode'] = img.mode
+        valor['format'] = img.format
+        valor['width'] = img.size[0]
+        valor['height'] = img.size[1]
+        valor['mode'] = img.mode
 
-    for elem in exif:
-        if not isinstance(exif.get(elem), bytes):
-            valor[TAGS.get(elem)] = exif.get(elem)
-    print ('\033[0;37m' +'-_' * 50, '\n')
-    print ('\033[0;36m' +clave +'\n' +'-' * 15 + '\n')
-   
-    for nombre, dato in valor.items():
-        print (f"\033[1;33m     {nombre}: \033[0;32m'{dato}")
+        for elem in exif:
+            if not isinstance(exif.get(elem), bytes):
+                valor[TAGS.get(elem)] = exif.get(elem)
+        print ('\033[0;37m' +'-_' * 50, '\n')
+        print ('\033[0;36m' +clave +'\n' +'-' * 15 + '\n')
+    
+        for nombre, dato in valor.items():
+            print (f"\033[1;33m     {nombre}: \033[0;32m'{dato}")
+    except:
+        print (f"{imagen} no es un archivo válido")

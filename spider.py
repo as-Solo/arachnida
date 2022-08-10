@@ -22,7 +22,8 @@ parser.add_argument('URL', help = "Indica la web a Scrapear.", type = str)
 
 args = parser.parse_args()
 
-
+if args.URL.startswith('www'):
+    args.URL = 'https://' + args.URL
 
 cmd = 'whoami'
 user = os.popen(cmd).read()[:-1]
@@ -42,11 +43,6 @@ print ('*' * 25, args.p, '*' * 25, args.l)
 #-----------------------------------------VARIABLES------------------------------------------------------
 
 headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36'}
-
-url_a_scrapear = [args.URL[:-1]]
-url_total = [args.URL[:-1]]
-
-url_base = (args.URL.split('/')[0] + '//' + args.URL.split('/')[2])
 
 images_data = []
 
@@ -72,10 +68,13 @@ def insertar_url (lista, lista2, url, url_base):
     
 
 def confirm_url (url):
-
-    chivato = requests.get(url, headers= headers)
-    if chivato.status_code == '200':
-        return (True)
+    try:
+        chivato = requests.get(url, headers= headers)
+        print (chivato.status_code)
+        if chivato.status_code == 200:
+            return True
+    except:
+        return False
 
 
 def name_url (img_src):
@@ -88,7 +87,6 @@ def name_url (img_src):
         if data[1] not in images_data:
             images_data.append(data[1])
             img[1] = base64.b64decode(data[1])
-            #print (data[0])
             if 'jpg' in data[0]:
                 img[0] = 'logo_' + str(random.randint(0,100)).zfill(3) + '.jpg'
             elif 'jpeg' in data[0]:
@@ -125,6 +123,16 @@ def name_url (img_src):
 
 #--------------------------------------------------------------------------------------------------------
 #-----------------------------------------EJECUCION------------------------------------------------------
+
+if confirm_url(args.URL):
+    url_a_scrapear = [args.URL.rstrip('/')]
+    url_total = [args.URL.rstrip('/')]
+    url_base = (args.URL.split('/')[0] + '//' + args.URL.split('/')[2])
+else:
+    url_a_scrapear = []
+    url_total = []
+    print (f"{args.URL} no es una dirección válida.")
+
 
 while args.l > 1:
     
